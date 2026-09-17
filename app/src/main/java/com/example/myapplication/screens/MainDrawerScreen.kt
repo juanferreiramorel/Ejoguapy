@@ -1,4 +1,4 @@
-package com.example.pam_sl_2026.screens
+package com.example.myapplication.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,18 +43,18 @@ fun MainDrawerScreen(
     usuario: String,
     onCerrarSesion: () -> Unit
 ) {
-    //Estado del Panel Lateral y cortina para animaciones
+    //Estado de panel lateral y cortina para animaciones
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    // Aca va la lista de opciones segun la actividad 1
+    //Lista de Opciones Segun LAactividad 1
     val modulos = listOf(
         "Inicio",
         "Usuarios",
         "Marcas",
         "Productos",
         "Proveedores",
-        "Pedidos de compra",
+        "Pedido de Compra",
         "Presupuesto"
     )
     var moduloSeleccionado by remember { mutableStateOf(modulos[0]) }
@@ -69,19 +69,18 @@ fun MainDrawerScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Aplicacion de compra",
+                            text = "Aplicacion de compras",
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "Operador: $usuario",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
-
                 modulos.forEach { modulo ->
                     NavigationDrawerItem(
                         label = { Text(text = modulo) },
@@ -95,8 +94,7 @@ fun MainDrawerScreen(
                 }
             }
         }
-    )
-    {
+    ) {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
@@ -130,34 +128,41 @@ fun MainDrawerScreen(
                 )
             }
         ) {
-                innerpadding ->
+
+                inneroadding ->
             ContenidoModuloActual(
                 modulo = moduloSeleccionado,
-                modifier = Modifier.padding(innerpadding)
+                modifier = Modifier.padding(inneroadding)
             )
         }
     }
 }
-//Contenedor de contenido segun el modulo seleccionado
+//contenedor de contenido segun el modulo seleccionado
 @Composable
-fun ContenidoModuloActual(modulo: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-
-    ) {
-        Text(
-            text = "Area de trabajo",
-            style = MaterialTheme.typography.bodySmall
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Aqui se integrara la interfaz de: $modulo",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+fun ContenidoModuloActual(modulo: String, modifier: Modifier=Modifier ){
+    when (modulo){
+        "Productos" -> {
+            ProductosScreen(modifier=modifier)
+        }else -> {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Area de Trabajo",
+                style =  MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Aqui se integra la interfaz de: $modulo",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        }
     }
+
 }

@@ -1,4 +1,4 @@
-package com.example.pam_sl_2026.components
+package com.example.myapplication.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,69 +25,65 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
-// Campo de texto personalizado
+//campo de texto personalizado
 @Composable
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     leadingIcon: ImageVector,
-    modifier:Modifier=Modifier,
+    modifier: Modifier = Modifier,
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text
 )
 {
-    var passwordVisible by remember { mutableStateOf(false)}
+    var passwordVisible by remember { mutableStateOf(false) }
     OutlinedTextField(
-        value=value,
-        onValueChange = onValueChange,
+        value= value,
+        onValueChange= onValueChange,
         label={Text(label)},
         leadingIcon={
-            Icon(imageVector=leadingIcon, contentDescription = label)
+            Icon(imageVector = leadingIcon, contentDescription = label)
         },
         trailingIcon = {
-            if (isPassword) {
+            if (isPassword){
                 IconButton(onClick = {passwordVisible = !passwordVisible}) {
                     Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        imageVector = if(passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                         contentDescription = if (passwordVisible) "Ocultar Clave" else "Mostrar Clave"
                     )
                 }
             }
-
         },
-        visualTransformation = if (isPassword && !passwordVisible) {
+        visualTransformation = if (isPassword && !passwordVisible){
             PasswordVisualTransformation()
-        } else {
+        }else {
             VisualTransformation.None
         },
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         singleLine = true,
-        shape = RoundedCornerShape(size = 12.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = modifier.fillMaxWidth()
     )
-
-
-
-
 }
-
+//opciones estandarizados y bordes redondeados
 @Composable
-fun CustomPrimaryButton (
+fun CustomPrimaryButton(
     text: String,
-    onClick:() -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    onClick: () -> Unit,
+    modifier: Modifier= Modifier,
+    enabled: Boolean= true
 ){
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape( size = 12.dp),
+        shape = RoundedCornerShape(12.dp),
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
-    ) {
-        Text(text = text,
+    ){
+        Text(
+            text = text,
             style = MaterialTheme.typography.titleMedium
         )
     }

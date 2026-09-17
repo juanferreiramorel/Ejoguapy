@@ -4,14 +4,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pam_sl_2026"
+    namespace = "com.example.myapplication"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.example.pam_sl_2026"
-        minSdk = 26
+        applicationId = "com.example.myapplication"
+        minSdk = 24
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
@@ -51,5 +51,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation("androidx.compose.material:material-icons-extended:1.7.0")
+    implementation("androidx.compose.material:material-icons-extended-android:1.7.0")
+    implementation("androidx.glance:glance-appwidget:1.2.0")
+    implementation("androidx.glance:glance-material3:1.2.0")
 }

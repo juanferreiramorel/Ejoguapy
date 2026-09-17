@@ -1,4 +1,4 @@
-package com.example.pam_sl_2026
+package com.example.myapplication
 
 import org.junit.Test
 

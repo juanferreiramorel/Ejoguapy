@@ -22,6 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PAM_SL_2026"
+rootProject.name = "My Application"
 include(":app")
- 

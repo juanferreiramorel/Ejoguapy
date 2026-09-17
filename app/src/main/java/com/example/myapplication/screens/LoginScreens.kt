@@ -1,4 +1,4 @@
-package com.example.pam_sl_2026.screens
+package com.example.myapplication.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -22,81 +22,74 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.pam_sl_2026.components.CustomPrimaryButton
-import com.example.pam_sl_2026.components.CustomTextField
+import com.example.myapplication.components.CustomPrimaryButton
+import com.example.myapplication.components.CustomTextField
+
 
 @Composable
-fun LoginScreen(
-    modifier: Modifier = Modifier,
-    onLoginSuccess: (String) -> Unit = {}
+fun LoginScreem(modifier: Modifier = Modifier,
+                onLoginSuccess: (String)->Unit = {}
 ){
     val context = LocalContext.current
-
-    //Declarar los estados mutables para los campos del formulario
-
-    var usuario by remember { mutableStateOf(value = "") }
-    var password by remember { mutableStateOf(value = "") }
+    //declaracion de de los estados mutables para los estados del formulario
+    var usuario by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     val esFormularioValido = usuario.isNotBlank() && password.length>= 4
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(all = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        //Encabezado
+        //encabezado
         Text(
-            text= "Aplicación de Compras",
+            text = "Aplicacion de Compras",
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        Text(text = "Ingrese sus credenciales de usuario",
+        Text(text = "ingrese sus credenciales de usuario",
             style = MaterialTheme.typography.bodyMedium,
-            color= MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top=4.dp, bottom = 32.dp)
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.padding(top = 4.dp, bottom = 32.dp)
         )
 
-        //Uso del control personalizado para el usuario
-
+        //uso del control personalizado del usuario
         CustomTextField(
             value = usuario,
             onValueChange = {usuario = it},
-            label = "Usuario o Correo",
+            label = "usuario o correo",
             leadingIcon = Icons.Default.Email,
             keyboardType = KeyboardType.Email
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
 
         CustomTextField(
             value = password,
             onValueChange = {password = it},
-            label = "Contraseña",
+            label = "ingrese su clave",
             leadingIcon = Icons.Default.Lock,
-            isPassword= true,
+            isPassword = true,
             keyboardType = KeyboardType.Password
         )
-
         Spacer(modifier = Modifier.height(28.dp))
 
-
-
-
         CustomPrimaryButton(
-            text= "Iniciar Sesion",
+            text = "iniciar sesion",
             enabled = esFormularioValido,
             onClick = {
-                if (usuario.trim() == "admin" && password == "1234") {
+                if (usuario.trim()=="admin" && password =="1234"){
                     Toast.makeText(context, "Acceso Concedido", Toast.LENGTH_SHORT).show()
                     onLoginSuccess(usuario)
-                }else {
-                    Toast.makeText(context,  "Acceso Denegado", Toast.LENGTH_SHORT).show()
+
+                }
+                else{
+                    Toast.makeText(context, "Acceso Incorreto", Toast.LENGTH_LONG).show()
                 }
             }
         )
+
     }
-
-
 }
