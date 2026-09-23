@@ -3,6 +3,7 @@ package com.example.myapplication.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -20,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -34,7 +36,12 @@ fun CustomTextField(
     leadingIcon: ImageVector,
     modifier: Modifier = Modifier,
     isPassword: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false, //marca el campo en rojo cuando la validacion falla
+    supportingText: String? = null, //mensaje de ayuda o de error debajo del campo
+    imeAction: ImeAction = ImeAction.Default, //boton de accion del teclado (ej: Buscar)
+    keyboardActions: KeyboardActions = KeyboardActions.Default, //que hacer al presionar ese boton
+    trailingContent: (@Composable () -> Unit)? = null //contenido opcional al final del campo (ej: boton de busqueda)
 )
 {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -46,7 +53,9 @@ fun CustomTextField(
             Icon(imageVector = leadingIcon, contentDescription = label)
         },
         trailingIcon = {
-            if (isPassword){
+            if (trailingContent != null){
+                trailingContent()
+            } else if (isPassword){
                 IconButton(onClick = {passwordVisible = !passwordVisible}) {
                     Icon(
                         imageVector = if(passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
@@ -60,7 +69,10 @@ fun CustomTextField(
         }else {
             VisualTransformation.None
         },
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = keyboardActions,
+        isError = isError,
+        supportingText = supportingText?.let { mensaje -> { Text(mensaje) } },
         singleLine = true,
         shape = RoundedCornerShape(12.dp),
         modifier = modifier.fillMaxWidth()

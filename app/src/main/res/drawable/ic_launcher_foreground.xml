@@ -1,3 +1,9 @@
-<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
-    android:gravity="fill"
-    android:src="@drawable/app_logo" />
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El logo se achica con un inset de 20dp (queda en 68dp de los 108dp del icono adaptativo)
+     para que entre en la zona segura de 66dp y la mascara del launcher no lo recorte -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="20dp">
+    <bitmap
+        android:gravity="fill"
+        android:src="@drawable/app_logo" />
+</inset>
