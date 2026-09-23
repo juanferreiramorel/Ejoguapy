@@ -97,7 +97,7 @@ val seccionesMenu = listOf(
         modulos = listOf(
             ModuloMenu("Productos", Icons.Filled.Inventory2, implementado = true),
             ModuloMenu("Proveedores", Icons.Filled.Business, implementado = true),
-            ModuloMenu("Marcas", Icons.Filled.Sell, implementado = false)
+            ModuloMenu("Marcas", Icons.Filled.Sell, implementado = true)
         )
     ),
     SeccionMenu(
@@ -437,6 +437,9 @@ fun ContenidoModuloActual(
         }
         "Proveedores" ->{
             ProveedoresScreen(modifier = modifier)
+        }
+        "Marcas" ->{
+            MarcasScreen(modifier = modifier)
         }
         "Ajustes" ->{
             AjustesScreen(
