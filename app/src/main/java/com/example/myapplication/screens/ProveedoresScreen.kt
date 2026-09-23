@@ -48,9 +48,9 @@ import com.example.myapplication.components.CustomTextField
 import com.example.myapplication.components.EstadoVacio
 import com.example.myapplication.components.obtenerIniciales
 import com.example.myapplication.data.ProveedorDao
-import com.example.myapplication.data.ResultadoRuc
-import com.example.myapplication.data.consultarRuc
-import com.example.myapplication.data.extraerNumeroRuc
+import com.example.myapplication.integrations.ResultadoRuc
+import com.example.myapplication.integrations.consultarRuc
+import com.example.myapplication.integrations.extraerNumeroRuc
 
 //modelo simple de datos para representar en la interfaz (id = codigo del proveedor)
 data class Proveedor(

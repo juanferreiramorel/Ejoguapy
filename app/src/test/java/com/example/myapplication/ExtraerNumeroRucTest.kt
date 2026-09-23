@@ -1,6 +1,6 @@
 package com.example.myapplication
 
-import com.example.myapplication.data.extraerNumeroRuc
+import com.example.myapplication.integrations.extraerNumeroRuc
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

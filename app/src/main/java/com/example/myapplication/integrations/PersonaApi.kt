@@ -1,4 +1,4 @@
-package com.example.myapplication.data
+package com.example.myapplication.integrations
 
 import com.example.myapplication.BuildConfig
 import kotlinx.coroutines.Dispatchers
