@@ -120,4 +120,18 @@ class ProveedorDao (context: Context) {
         return idRestaurado
     }
 
+    //7- Cantidad de proveedores activos (resumen para el widget)
+    fun contarActivos(): Int{
+        val db =dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM ${DatabaseHelper.TABLA_PROVEEDORES} WHERE ${DatabaseHelper.COL_PROV_ACTIVO}=1", null
+        )
+        var cantidad = 0
+        if (cursor.moveToFirst()){
+            cantidad = cursor.getInt(0)
+        }
+        cursor.close()
+        db.close()
+        return cantidad
+    }
 }

@@ -106,4 +106,49 @@ class ProductoDao (context: Context) {
         return idRestaurado
     }
 
+    //6- Cantidad de productos activos (resumen para el widget)
+    fun contarActivos(): Int{
+        val db =dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM ${DatabaseHelper.TABLA_PRODUCTOS} WHERE ${DatabaseHelper.COL_ACTIVO}=1", null
+        )
+        var cantidad = 0
+        if (cursor.moveToFirst()){
+            cantidad = cursor.getInt(0)
+        }
+        cursor.close()
+        db.close()
+        return cantidad
+    }
+
+    //7- Cantidad total de productos, activos e inactivos (resumen para el widget)
+    fun contarTodos(): Int{
+        val db =dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM ${DatabaseHelper.TABLA_PRODUCTOS}", null
+        )
+        var cantidad = 0
+        if (cursor.moveToFirst()){
+            cantidad = cursor.getInt(0)
+        }
+        cursor.close()
+        db.close()
+        return cantidad
+    }
+
+    //8- Suma de precios de los productos activos = valor del catalogo (resumen para el widget)
+    //TOTAL() devuelve 0.0 cuando no hay filas (SUM() devolveria NULL)
+    fun sumarPrecioActivos(): Double{
+        val db =dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT TOTAL(${DatabaseHelper.COL_PRECIO}) FROM ${DatabaseHelper.TABLA_PRODUCTOS} WHERE ${DatabaseHelper.COL_ACTIVO}=1", null
+        )
+        var total = 0.0
+        if (cursor.moveToFirst()){
+            total = cursor.getDouble(0)
+        }
+        cursor.close()
+        db.close()
+        return total
+    }
 }

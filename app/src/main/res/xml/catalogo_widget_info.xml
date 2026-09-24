@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- minWidth/minHeight: tamano minimo de 2x2 celdas (formula de Android: 70*n - 30 dp)
+     targetCell: tamano por defecto 3x2 en Android 12+ (muestra la version con estadisticas)
+     minResize: se puede achicar hasta la version compacta de 2x2 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-android:minWidth="140dp"
+    android:minWidth="110dp"
     android:minHeight="110dp"
-    android:targetCellWidth="2"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:targetCellWidth="3"
     android:targetCellHeight="2"
     android:updatePeriodMillis="1800000"
-    android:description="@string/app_name"
+    android:description="@string/widget_catalogo_descripcion"
+    android:previewImage="@drawable/app_logo"
+    android:initialLayout="@layout/glance_default_loading_layout"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
-
-    />
+    android:widgetCategory="home_screen" />

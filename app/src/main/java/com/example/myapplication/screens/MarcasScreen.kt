@@ -30,6 +30,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.widget.actualizarWidgetCatalogo
 import kotlinx.coroutines.launch
 
 import com.example.myapplication.components.AvatarCircular
@@ -112,10 +113,12 @@ fun MarcasScreen(modifier: Modifier= Modifier){
         val filas = dao.actualizar(marca.copy(activo = !marca.activo))
         if (filas>0){
             recargarMarcasDesdeDb()
+            actualizarWidgetCatalogo(context)
             mostrarMensajeConDeshacer(if (marca.activo) "Marca deshabilitada" else "Marca habilitada"){
                 //se vuelve al estado anterior
                 dao.actualizar(marca)
                 recargarMarcasDesdeDb()
+                actualizarWidgetCatalogo(context)
             }
         }else{
             mostrarMensaje("Error al cambiar el estado de la marca")
@@ -185,10 +188,12 @@ fun MarcasScreen(modifier: Modifier= Modifier){
                                 val filas = dao.eliminar(marca.id)
                                 if (filas>0){
                                     recargarMarcasDesdeDb()
+                                    actualizarWidgetCatalogo(context)
                                     //se ofrece deshacer: se vuelve a insertar con el mismo codigo
                                     mostrarMensajeConDeshacer("Marca eliminada"){
                                         if (dao.restaurar(marca) != -1L){
                                             recargarMarcasDesdeDb()
+                                            actualizarWidgetCatalogo(context)
                                         }else{
                                             mostrarMensaje("No se pudo restaurar la marca")
                                         }
@@ -269,6 +274,7 @@ fun MarcasScreen(modifier: Modifier= Modifier){
                                 //1-Insercion
                                 val idGenerado=dao.insertar(marc)
                                 if(idGenerado!=-1L){
+                                    actualizarWidgetCatalogo(context)
                                     mostrarMensaje("Marca guardada (Codigo: $idGenerado)")
                                 }else{
                                     mostrarMensaje("Error al guardar la marca")
@@ -277,6 +283,7 @@ fun MarcasScreen(modifier: Modifier= Modifier){
                                 //2-Actualizacion
                                 val filas=dao.actualizar(marc)
                                 if (filas>0){
+                                    actualizarWidgetCatalogo(context)
                                     mostrarMensaje("Registro actualizado en base de datos")
                                 }else{
                                     mostrarMensaje("Error al actualizar el registro")

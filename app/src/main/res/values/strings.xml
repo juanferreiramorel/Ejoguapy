@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">My Application</string>
+    <!-- descripcion que muestra el selector de widgets del launcher -->
+    <string name="widget_catalogo_descripcion">Resumen del catalogo de productos</string>
 </resources>

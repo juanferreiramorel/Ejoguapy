@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.widget.actualizarWidgetCatalogo
 import kotlinx.coroutines.launch
 
 import com.example.myapplication.components.AvatarCircular
@@ -114,10 +115,12 @@ fun ProductosScreen(modifier: Modifier= Modifier){
         val filas = dao.actualizar(producto.copy(activo = !producto.activo))
         if (filas>0){
             recargarProductosDesdeDb()
+            actualizarWidgetCatalogo(context)
             mostrarMensajeConDeshacer(if (producto.activo) "Producto deshabilitado" else "Producto habilitado"){
                 //se vuelve al estado anterior
                 dao.actualizar(producto)
                 recargarProductosDesdeDb()
+                actualizarWidgetCatalogo(context)
             }
         }else{
             mostrarMensaje("Error al cambiar el estado del producto")
@@ -140,10 +143,12 @@ fun ProductosScreen(modifier: Modifier= Modifier){
                         val filas = dao.eliminar(producto.id)
                         if (filas>0){
                             recargarProductosDesdeDb()
+                            actualizarWidgetCatalogo(context)
                             //se ofrece deshacer: se vuelve a insertar con el mismo id y proveedor
                             mostrarMensajeConDeshacer("Producto eliminado"){
                                 if (dao.restaurar(producto) != -1L){
                                     recargarProductosDesdeDb()
+                                    actualizarWidgetCatalogo(context)
                                 }else{
                                     mostrarMensaje("No se pudo restaurar el producto")
                                 }
@@ -218,6 +223,7 @@ fun ProductosScreen(modifier: Modifier= Modifier){
                             //1-Insercion
                             val idGenerado=dao.insertar(prod)
                             if(idGenerado!=-1L){
+                                actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Producto guardado (ID: $idGenerado)")
                             }else{
                                 mostrarMensaje("Error al guardar el producto")
@@ -226,6 +232,7 @@ fun ProductosScreen(modifier: Modifier= Modifier){
                             //2-Actualizacion
                             val filas=dao.actualizar(prod)
                             if (filas>0){
+                                actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Registro actualizado en base de datos")
                             }else{
                                 mostrarMensaje("Error al actualizar el registro")

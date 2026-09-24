@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.myapplication.widget.actualizarWidgetCatalogo
 import kotlinx.coroutines.launch
 
 import com.example.myapplication.components.AvatarCircular
@@ -125,10 +126,12 @@ fun ProveedoresScreen(modifier: Modifier= Modifier){
         val filas = dao.actualizar(proveedor.copy(activo = !proveedor.activo))
         if (filas>0){
             recargarProveedoresDesdeDb()
+            actualizarWidgetCatalogo(context)
             mostrarMensajeConDeshacer(if (proveedor.activo) "Proveedor deshabilitado" else "Proveedor habilitado"){
                 //se vuelve al estado anterior
                 dao.actualizar(proveedor)
                 recargarProveedoresDesdeDb()
+                actualizarWidgetCatalogo(context)
             }
         }else{
             mostrarMensaje("Error al cambiar el estado del proveedor")
@@ -198,10 +201,12 @@ fun ProveedoresScreen(modifier: Modifier= Modifier){
                                 val filas = dao.eliminar(proveedor.id)
                                 if (filas>0){
                                     recargarProveedoresDesdeDb()
+                                    actualizarWidgetCatalogo(context)
                                     //se ofrece deshacer: se vuelve a insertar con el mismo codigo
                                     mostrarMensajeConDeshacer("Proveedor eliminado"){
                                         if (dao.restaurar(proveedor) != -1L){
                                             recargarProveedoresDesdeDb()
+                                            actualizarWidgetCatalogo(context)
                                         }else{
                                             mostrarMensaje("No se pudo restaurar el proveedor")
                                         }
@@ -281,6 +286,7 @@ fun ProveedoresScreen(modifier: Modifier= Modifier){
                             //1-Insercion
                             val idGenerado=dao.insertar(prov)
                             if(idGenerado!=-1L){
+                                actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Proveedor guardado (Codigo: $idGenerado)")
                             }else{
                                 mostrarMensaje("Error al guardar el proveedor")
@@ -289,6 +295,7 @@ fun ProveedoresScreen(modifier: Modifier= Modifier){
                             //2-Actualizacion
                             val filas=dao.actualizar(prov)
                             if (filas>0){
+                                actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Registro actualizado en base de datos")
                             }else{
                                 mostrarMensaje("Error al actualizar el registro")
