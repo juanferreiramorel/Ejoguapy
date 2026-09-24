@@ -283,20 +283,26 @@ fun ProveedoresScreen(modifier: Modifier= Modifier){
                     proveedorInicial = proveedorAEditar,
                     onGuardarProveedor = {prov ->
                         if (proveedorAEditar==null){
-                            //1-Insercion
+                            //1-Insercion (db.insert devuelve -1 si la base rechaza el registro, por ejemplo un RUC repetido)
                             val idGenerado=dao.insertar(prov)
                             if(idGenerado!=-1L){
                                 actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Proveedor guardado (Codigo: $idGenerado)")
                             }else{
-                                mostrarMensaje("Error al guardar el proveedor")
+                                mostrarMensaje("No se pudo guardar: verifique que el RUC no este repetido")
                             }
                         }else{
-                            //2-Actualizacion
-                            val filas=dao.actualizar(prov)
+                            //2-Actualizacion (db.update lanza una excepcion si el RUC ya existe en otro proveedor)
+                            val filas = try {
+                                dao.actualizar(prov)
+                            } catch (e: SQLiteConstraintException) {
+                                -1
+                            }
                             if (filas>0){
                                 actualizarWidgetCatalogo(context)
                                 mostrarMensaje("Registro actualizado en base de datos")
+                            }else if (filas == -1){
+                                mostrarMensaje("No se pudo actualizar: ya existe un proveedor con ese RUC")
                             }else{
                                 mostrarMensaje("Error al actualizar el registro")
                             }
@@ -611,11 +617,20 @@ fun FormularioProveedorTab(
     val formatoRuc = remember { Regex("^\\d{5,8}-\\d$") }
     //telefono: solo digitos, espacios, + y -
     val formatoTelefono = remember { Regex("^[0-9+\\- ]+$") }
+    //los demas proveedores (sin el que se esta editando), para no repetir el RUC
+    val otrosProveedores = remember(proveedorInicial) {
+        dao.listarTodos().filter { it.id != proveedorInicial?.id }
+    }
+    //se compara solo el numero (sin DV): 80012345-6 y 80012345-7 son el mismo RUC
+    val proveedorConMismoRuc = extraerNumeroRuc(ruc)?.let { numero ->
+        otrosProveedores.firstOrNull { extraerNumeroRuc(it.ruc) == numero }
+    }
     val errorRazonSocial: String? = if (razonSocial.isBlank()) "La razon social es obligatoria" else null
     val errorRuc: String? = when {
         errorBusquedaRuc != null -> errorBusquedaRuc
         ruc.isBlank() -> "El RUC es obligatorio"
         !formatoRuc.matches(ruc.trim()) -> "Formato invalido (ej: 80012345-6)"
+        proveedorConMismoRuc != null -> "Ya existe un proveedor con ese RUC: ${proveedorConMismoRuc.razonSocial}"
         else -> null
     }
     val errorTelefono: String? =

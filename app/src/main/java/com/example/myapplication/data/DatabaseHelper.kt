@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper
 class DatabaseHelper (context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object{
         const val DATABASE_NAME ="sistema_compras_db"
-        const val DATABASE_VERSION = 5
+        const val DATABASE_VERSION = 6
         const val TABLA_PRODUCTOS = "productos"
         const val COL_ID = "id"
         const val COL_DESCRIPCION = "descripcion"
@@ -48,7 +48,7 @@ class DatabaseHelper (context: Context) : SQLiteOpenHelper(context, DATABASE_NAM
             CREATE TABLE $TABLA_PROVEEDORES(
             $COL_PROV_ID INTEGER PRIMARY KEY AUTOINCREMENT,
             $COL_PROV_RAZON_SOCIAL TEXT NOT NULL,
-            $COL_PROV_RUC TEXT NOT NULL,
+            $COL_PROV_RUC TEXT NOT NULL UNIQUE,
             $COL_PROV_DIRECCION TEXT NOT NULL,
             $COL_PROV_TELEFONO TEXT NOT NULL,
             $COL_PROV_CORREO TEXT NOT NULL,
