@@ -42,7 +42,7 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.example.myapplication.MainActivity
 import com.example.myapplication.R
-import com.example.myapplication.data.MarcaDao
+import com.example.myapplication.data.CategoriaDao
 import com.example.myapplication.data.ProductoDao
 import com.example.myapplication.data.ProveedorDao
 import com.example.myapplication.ui.theme.Pink40
@@ -63,7 +63,7 @@ data class ResumenCatalogo(
     val productosActivos: Int,
     val productosInactivos: Int,
     val proveedoresActivos: Int,
-    val marcasActivas: Int,
+    val totalCategorias: Int, //las categorias no tienen estado: se cuentan todas
     val valorCatalogo: Double,
     val horaActualizacion: String
 )
@@ -110,7 +110,7 @@ class CatalogoWidget : GlanceAppWidget() {
                 productosActivos = activos,
                 productosInactivos = total - activos,
                 proveedoresActivos = ProveedorDao(context).contarActivos(),
-                marcasActivas = MarcaDao(context).contarActivos(),
+                totalCategorias = CategoriaDao(context).contarTodos(),
                 valorCatalogo = productoDao.sumarPrecioActivos(),
                 horaActualizacion = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
             )
@@ -184,7 +184,7 @@ private fun VersionMediana(resumen: ResumenCatalogo?) {
             Spacer(modifier = GlanceModifier.width(10.dp))
             EstadisticaMini(resumen?.proveedoresActivos, "Proveed.")
             Spacer(modifier = GlanceModifier.width(10.dp))
-            EstadisticaMini(resumen?.marcasActivas, "Marcas")
+            EstadisticaMini(resumen?.totalCategorias, "Categ.")
         }
         Spacer(modifier = GlanceModifier.defaultWeight())
         Row(
@@ -239,7 +239,7 @@ private fun VersionGrande(resumen: ResumenCatalogo?) {
             Spacer(modifier = GlanceModifier.width(6.dp))
             TarjetaEstadistica(resumen?.proveedoresActivos, "Proveedores", GlanceModifier.defaultWeight())
             Spacer(modifier = GlanceModifier.width(6.dp))
-            TarjetaEstadistica(resumen?.marcasActivas, "Marcas", GlanceModifier.defaultWeight())
+            TarjetaEstadistica(resumen?.totalCategorias, "Categorias", GlanceModifier.defaultWeight())
         }
         Spacer(modifier = GlanceModifier.defaultWeight())
         Row(

@@ -19,14 +19,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Warehouse
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.RequestQuote
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
@@ -86,31 +87,32 @@ sealed class FilaMenu {
     data class Item(val modulo: ModuloMenu) : FilaMenu()
 }
 
-//Secciones del menu SEGUN LO DEFINIDO EN LA ACTIVIDAD 1 (agrupadas)
+//Secciones del menu SEGUN EL ALCANCE DEL PROYECTO: 5 referenciales y 2 movimientos
 val seccionesMenu = listOf(
     SeccionMenu(
         titulo = null,
         modulos = listOf(ModuloMenu("Inicio", Icons.Filled.Home, implementado = false))
     ),
     SeccionMenu(
-        titulo = "Catalogo",
+        titulo = "Referenciales",
         modulos = listOf(
-            ModuloMenu("Productos", Icons.Filled.Inventory2, implementado = true),
             ModuloMenu("Proveedores", Icons.Filled.Business, implementado = true),
-            ModuloMenu("Marcas", Icons.Filled.Sell, implementado = true)
+            ModuloMenu("Productos", Icons.Filled.Inventory2, implementado = true),
+            ModuloMenu("Categorias", Icons.Filled.Category, implementado = true),
+            ModuloMenu("Depositos", Icons.Filled.Warehouse, implementado = false),
+            ModuloMenu("Empleados / Usuarios", Icons.Filled.Badge, implementado = false)
         )
     ),
     SeccionMenu(
-        titulo = "Operaciones",
+        titulo = "Movimientos",
         modulos = listOf(
             ModuloMenu("Pedidos de Compra", Icons.Filled.ShoppingCart, implementado = false),
-            ModuloMenu("Presupuestos", Icons.Filled.RequestQuote, implementado = false)
+            ModuloMenu("Compras", Icons.Filled.Receipt, implementado = false)
         )
     ),
     SeccionMenu(
         titulo = "Sistema",
         modulos = listOf(
-            ModuloMenu("Usuarios", Icons.Filled.People, implementado = false),
             ModuloMenu("Ajustes", Icons.Filled.Settings, implementado = true)
         )
     )
@@ -438,8 +440,8 @@ fun ContenidoModuloActual(
         "Proveedores" ->{
             ProveedoresScreen(modifier = modifier)
         }
-        "Marcas" ->{
-            MarcasScreen(modifier = modifier)
+        "Categorias" ->{
+            CategoriasScreen(modifier = modifier)
         }
         "Ajustes" ->{
             AjustesScreen(

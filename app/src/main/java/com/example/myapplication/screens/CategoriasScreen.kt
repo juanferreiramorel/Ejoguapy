@@ -12,20 +12,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -38,24 +35,24 @@ import com.example.myapplication.components.CampoBusqueda
 import com.example.myapplication.components.CustomTextField
 import com.example.myapplication.components.EstadoVacio
 import com.example.myapplication.components.obtenerIniciales
-import com.example.myapplication.data.MarcaDao
+import com.example.myapplication.data.CategoriaDao
 
-//modelo simple de datos para representar en la interfaz (id = codigo de la marca)
-data class Marca(
+//modelo simple de datos para representar en la interfaz (id = codigo de la categoria)
+//las categorias no tienen estado (activo/inactivo), solo codigo, nombre y descripcion
+data class Categoria(
     val id: Int,
     val nombre: String,
-    val descripcion: String,
-    val activo: Boolean
+    val descripcion: String
 )
 
-//largo maximo permitido para el nombre de la marca
-private const val LARGO_MAXIMO_NOMBRE_MARCA = 50
+//largo maximo permitido para el nombre de la categoria
+private const val LARGO_MAXIMO_NOMBRE_CATEGORIA = 50
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MarcasScreen(modifier: Modifier= Modifier){
+fun CategoriasScreen(modifier: Modifier= Modifier){
     val context= LocalContext.current
-    val dao = remember { MarcaDao(context) }
+    val dao = remember { CategoriaDao(context) }
     //Estado para controlar la pestana seleccionada (0: Listado, 1: Formulario de Alta)
     var selectedTabIndex by remember { mutableStateOf(0) }
     val pestanas = listOf("Listado", "Nuevo Registro")
@@ -67,23 +64,23 @@ fun MarcasScreen(modifier: Modifier= Modifier){
     //orden seleccionado en el menu del listado: null (sin orden), "ASC" o "DESC"
     var ordenSeleccionado by remember { mutableStateOf<String?>(null) }
 
-    //Lista en memoria de marcas
-    val marcasRegistradas = remember {
-        mutableStateListOf<Marca>()
+    //Lista en memoria de categorias
+    val categoriasRegistradas = remember {
+        mutableStateListOf<Categoria>()
     }
     //funcion auxiliar para refrescar la lista desde la base de datos (respetando el orden elegido)
-    fun recargarMarcasDesdeDb(){
+    fun recargarCategoriasDesdeDb(){
         val desdeDb = dao.listarTodos()
         val ordenadas = when (ordenSeleccionado){
             "ASC" -> desdeDb.sortedBy { it.nombre.lowercase() }
             "DESC" -> desdeDb.sortedByDescending { it.nombre.lowercase() }
             else -> desdeDb
         }
-        marcasRegistradas.clear()
-        marcasRegistradas.addAll(ordenadas)
+        categoriasRegistradas.clear()
+        categoriasRegistradas.addAll(ordenadas)
     }
     LaunchedEffect(Unit){
-        recargarMarcasDesdeDb()
+        recargarCategoriasDesdeDb()
     }
 
     //muestra un mensaje simple en el Snackbar
@@ -108,112 +105,76 @@ fun MarcasScreen(modifier: Modifier= Modifier){
         }
     }
 
-    //habilita o deshabilita una marca (menu contextual o dialogo de "no se puede eliminar")
-    fun cambiarEstadoMarca(marca: Marca){
-        val filas = dao.actualizar(marca.copy(activo = !marca.activo))
-        if (filas>0){
-            recargarMarcasDesdeDb()
-            actualizarWidgetCatalogo(context)
-            mostrarMensajeConDeshacer(if (marca.activo) "Marca deshabilitada" else "Marca habilitada"){
-                //se vuelve al estado anterior
-                dao.actualizar(marca)
-                recargarMarcasDesdeDb()
-                actualizarWidgetCatalogo(context)
-            }
+    //estado para la categoria seleccionada a eliminar
+    var categoriaAEliminar by remember { mutableStateOf<Categoria?>(null) }
+    var categoriaAEditar by remember { mutableStateOf<Categoria?>(null) }
+    //categoria que no se puede eliminar por tener productos asociados (categoria, cantidad de productos)
+    var categoriaConProductos by remember { mutableStateOf<Pair<Categoria, Int>?>(null) }
+
+    //antes de pedir confirmacion se verifica si la categoria tiene productos asociados
+    fun solicitarEliminacion(categoria: Categoria){
+        val cantidadProductos = dao.contarProductos(categoria.id)
+        if (cantidadProductos>0){
+            categoriaConProductos = categoria to cantidadProductos
         }else{
-            mostrarMensaje("Error al cambiar el estado de la marca")
+            categoriaAEliminar = categoria
         }
     }
 
-    //estado para la marca seleccionada a eliminar
-    var marcaAEliminar by remember { mutableStateOf<Marca?>(null) }
-    var marcaAEditar by remember { mutableStateOf<Marca?>(null) }
-    //marca que no se pudo eliminar por tener productos asociados (marca, cantidad de productos)
-    var marcaADeshabilitar by remember { mutableStateOf<Pair<Marca, Int>?>(null) }
-
-    //dialogo: no se puede eliminar, se ofrece deshabilitar
-    marcaADeshabilitar?.let { (marca, cantidadProductos) ->
+    //dialogo: no se puede eliminar porque tiene productos asociados
+    categoriaConProductos?.let { (categoria, cantidadProductos) ->
         AlertDialog(
-            onDismissRequest = {marcaADeshabilitar=null},
+            onDismissRequest = {categoriaConProductos=null},
             title = {Text("No se puede eliminar")},
             text= {
-                if (marca.activo){
-                    Text("La marca '${marca.nombre}' tiene $cantidadProductos productos asociados.\n\n¿Desea deshabilitarla? Sus productos se conservan, pero ya no aparecera al registrar productos nuevos.")
-                }else{
-                    Text("La marca '${marca.nombre}' tiene $cantidadProductos productos asociados y ya se encuentra deshabilitada.")
-                }
+                Text("La categoria '${categoria.nombre}' tiene $cantidadProductos productos asociados. Reasigne esos productos a otra categoria antes de eliminarla.")
             },
             confirmButton = {
-                if (marca.activo){
-                    TextButton(
-                        onClick = {
-                            cambiarEstadoMarca(marca)
-                            marcaADeshabilitar=null
-                        }
-                    ) {
-                        Text("Deshabilitar", color= MaterialTheme.colorScheme.error)
-                    }
-                }else{
-                    TextButton(onClick = {marcaADeshabilitar=null}) {
-                        Text("Entendido")
-                    }
-                }
-            },
-            dismissButton = {
-                if (marca.activo){
-                    TextButton(onClick = {marcaADeshabilitar=null}) {
-                        Text("Cancelar")
-                    }
+                TextButton(onClick = {categoriaConProductos=null}) {
+                    Text("Entendido")
                 }
             }
         )
     }
 
     //dialogo de confirmacion
-    marcaAEliminar?.let { marca ->
+    categoriaAEliminar?.let { categoria ->
         AlertDialog(
-            onDismissRequest = {marcaAEliminar=null},
+            onDismissRequest = {categoriaAEliminar=null},
             title = {Text("Confirmar Eliminacion")},
-            text= {Text("¿Desea eliminar permanentemente la marca '${marca.nombre}'?")},
+            text= {Text("¿Desea eliminar permanentemente la categoria '${categoria.nombre}'?")},
             confirmButton = {
                 TextButton(
                     onClick = {
-                        //no se puede eliminar una marca que tiene productos asociados
-                        val cantidadProductos = dao.contarProductos(marca.id)
-                        if (cantidadProductos>0){
-                            //se ofrece deshabilitarla en lugar de eliminarla
-                            marcaADeshabilitar = marca to cantidadProductos
-                        }else{
-                            try {
-                                val filas = dao.eliminar(marca.id)
-                                if (filas>0){
-                                    recargarMarcasDesdeDb()
-                                    actualizarWidgetCatalogo(context)
-                                    //se ofrece deshacer: se vuelve a insertar con el mismo codigo
-                                    mostrarMensajeConDeshacer("Marca eliminada"){
-                                        if (dao.restaurar(marca) != -1L){
-                                            recargarMarcasDesdeDb()
-                                            actualizarWidgetCatalogo(context)
-                                        }else{
-                                            mostrarMensaje("No se pudo restaurar la marca")
-                                        }
+                        try {
+                            val filas = dao.eliminar(categoria.id)
+                            if (filas>0){
+                                recargarCategoriasDesdeDb()
+                                actualizarWidgetCatalogo(context)
+                                //se ofrece deshacer: se vuelve a insertar con el mismo codigo
+                                mostrarMensajeConDeshacer("Categoria eliminada"){
+                                    if (dao.restaurar(categoria) != -1L){
+                                        recargarCategoriasDesdeDb()
+                                        actualizarWidgetCatalogo(context)
+                                    }else{
+                                        mostrarMensaje("No se pudo restaurar la categoria")
                                     }
-                                }else{
-                                    mostrarMensaje("Error al eliminar el registro")
                                 }
-                            } catch (e: SQLiteConstraintException){
-                                //por seguridad: la clave foranea impide borrar si quedo algun producto asociado
-                                marcaADeshabilitar = marca to dao.contarProductos(marca.id)
+                            }else{
+                                mostrarMensaje("Error al eliminar el registro")
                             }
+                        } catch (e: SQLiteConstraintException){
+                            //por seguridad: la clave foranea impide borrar si quedo algun producto asociado
+                            categoriaConProductos = categoria to dao.contarProductos(categoria.id)
                         }
-                        marcaAEliminar=null
+                        categoriaAEliminar=null
                     }
                 ) {
                     Text("Eliminar", color= MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = {marcaAEliminar=null}) {
+                TextButton(onClick = {categoriaAEliminar=null}) {
                     Text("Cancelar")
                 }
             }
@@ -229,7 +190,7 @@ fun MarcasScreen(modifier: Modifier= Modifier){
                     Tab(
                         selected = selectedTabIndex== index,
                         onClick = {if (index== 1 && selectedTabIndex==0){
-                            marcaAEditar=null
+                            categoriaAEditar=null
                         }
 
                             selectedTabIndex = index
@@ -240,48 +201,47 @@ fun MarcasScreen(modifier: Modifier= Modifier){
             }
             //renderizado condicional segun la pestana activa
             when(selectedTabIndex){
-                0-> ListadoMarcasTab(
-                    marcas = marcasRegistradas,
+                0-> ListadoCategoriasTab(
+                    categorias = categoriasRegistradas,
                     ordenSeleccionado = ordenSeleccionado,
                     onOrdenarPorNombreAsc = {
                         ordenSeleccionado = "ASC"
-                        val ordenadas = marcasRegistradas.sortedBy { it.nombre.lowercase() }
-                        marcasRegistradas.clear()
-                        marcasRegistradas.addAll(ordenadas)
+                        val ordenadas = categoriasRegistradas.sortedBy { it.nombre.lowercase() }
+                        categoriasRegistradas.clear()
+                        categoriasRegistradas.addAll(ordenadas)
                     },
                     onOrdenarPorNombreDesc = {
                         ordenSeleccionado = "DESC"
-                        val ordenadas = marcasRegistradas.sortedByDescending { it.nombre.lowercase() }
-                        marcasRegistradas.clear()
-                        marcasRegistradas.addAll(ordenadas)
+                        val ordenadas = categoriasRegistradas.sortedByDescending { it.nombre.lowercase() }
+                        categoriasRegistradas.clear()
+                        categoriasRegistradas.addAll(ordenadas)
                     },
-                    onSolicitarEliminar = {marca-> marcaAEliminar=marca},
-                    onEditar = {marca ->
-                        marcaAEditar=marca
+                    onSolicitarEliminar = {categoria-> solicitarEliminacion(categoria)},
+                    onEditar = {categoria ->
+                        categoriaAEditar=categoria
                         selectedTabIndex=1
                     },
-                    onCambiarEstado = {marca -> cambiarEstadoMarca(marca)},
                     onRegistrarPrimero = {
-                        marcaAEditar=null
+                        categoriaAEditar=null
                         selectedTabIndex=1
                     }
                 )
-                1 -> FormularioMarcaTab(
-                    marcaInicial = marcaAEditar,
-                    onGuardarMarca = {marc ->
+                1 -> FormularioCategoriaTab(
+                    categoriaInicial = categoriaAEditar,
+                    onGuardarCategoria = {cat ->
                         try {
-                            if (marcaAEditar==null){
+                            if (categoriaAEditar==null){
                                 //1-Insercion
-                                val idGenerado=dao.insertar(marc)
+                                val idGenerado=dao.insertar(cat)
                                 if(idGenerado!=-1L){
                                     actualizarWidgetCatalogo(context)
-                                    mostrarMensaje("Marca guardada (Codigo: $idGenerado)")
+                                    mostrarMensaje("Categoria guardada (Codigo: $idGenerado)")
                                 }else{
-                                    mostrarMensaje("Error al guardar la marca")
+                                    mostrarMensaje("Error al guardar la categoria")
                                 }
                             }else{
                                 //2-Actualizacion
-                                val filas=dao.actualizar(marc)
+                                val filas=dao.actualizar(cat)
                                 if (filas>0){
                                     actualizarWidgetCatalogo(context)
                                     mostrarMensaje("Registro actualizado en base de datos")
@@ -289,16 +249,16 @@ fun MarcasScreen(modifier: Modifier= Modifier){
                                     mostrarMensaje("Error al actualizar el registro")
                                 }
                             }
-                            marcaAEditar=null
-                            recargarMarcasDesdeDb()
+                            categoriaAEditar=null
+                            recargarCategoriasDesdeDb()
                             selectedTabIndex=0
                         } catch (e: SQLiteConstraintException){
-                            //el nombre es UNIQUE: se queda en el formulario para que el usuario lo corrija
-                            mostrarMensaje("Ya existe una marca con ese nombre")
+                            //el nombre es UNIQUE (sin distinguir mayusculas): se queda en el formulario para corregirlo
+                            mostrarMensaje("Ya existe una categoria con ese nombre")
                         }
                     },
                     onCancelarEdicion = {
-                        marcaAEditar=null
+                        categoriaAEditar=null
                         selectedTabIndex=0
                     }
                 )
@@ -312,29 +272,28 @@ fun MarcasScreen(modifier: Modifier= Modifier){
 }
 
 
-//Pestana 1: Listado de marcas
+//Pestana 1: Listado de categorias
 @Composable
-fun ListadoMarcasTab(
-    marcas: List<Marca>,
+fun ListadoCategoriasTab(
+    categorias: List<Categoria>,
     ordenSeleccionado: String?,
     onOrdenarPorNombreAsc: () -> Unit,
     onOrdenarPorNombreDesc: () -> Unit,
-    onSolicitarEliminar: (Marca) -> Unit,
-    onEditar: (Marca) -> Unit,
-    onCambiarEstado: (Marca) -> Unit,
+    onSolicitarEliminar: (Categoria) -> Unit,
+    onEditar: (Categoria) -> Unit,
     onRegistrarPrimero: () -> Unit
 ){
     var menuOpcionesGeneralExpandido by remember { mutableStateOf(false) }
     //texto de busqueda: filtra por nombre o descripcion (sin distinguir mayusculas)
     var textoBusqueda by remember { mutableStateOf("") }
     val filtrando = textoBusqueda.isNotBlank()
-    val marcasFiltradas = if (filtrando) {
+    val categoriasFiltradas = if (filtrando) {
         val buscado = textoBusqueda.trim()
-        marcas.filter {
+        categorias.filter {
             it.nombre.contains(buscado, ignoreCase = true) ||
                     it.descripcion.contains(buscado, ignoreCase = true)
         }
-    } else marcas
+    } else categorias
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         //cabecera con menu basico
@@ -344,8 +303,8 @@ fun ListadoMarcasTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text= if (filtrando) "Marcas (${marcasFiltradas.size}/${marcas.size} registros)"
-                      else "Marcas (${marcas.size} registros)",
+                text= if (filtrando) "Categorias (${categoriasFiltradas.size}/${categorias.size} registros)"
+                      else "Categorias (${categorias.size} registros)",
                 style = MaterialTheme.typography.titleMedium
             )
             //disparador del menu basico general
@@ -386,8 +345,8 @@ fun ListadoMarcasTab(
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        //campo de busqueda (solo si hay marcas cargadas)
-        if (marcas.isNotEmpty()){
+        //campo de busqueda (solo si hay categorias cargadas)
+        if (categorias.isNotEmpty()){
             CampoBusqueda(
                 texto = textoBusqueda,
                 onTextoChange = {textoBusqueda=it},
@@ -395,15 +354,15 @@ fun ListadoMarcasTab(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        if(marcas.isEmpty()){
+        if(categorias.isEmpty()){
             //estado vacio: no hay nada registrado
             EstadoVacio(
-                icono = Icons.Default.Sell,
-                mensaje = "No hay marcas registradas aun",
+                icono = Icons.Default.Category,
+                mensaje = "No hay categorias registradas aun",
                 textoBoton = "Registrar la primera",
                 onAccion = onRegistrarPrimero
             )
-        } else if (marcasFiltradas.isEmpty()){
+        } else if (categoriasFiltradas.isEmpty()){
             //la busqueda no encontro coincidencias
             EstadoVacio(
                 icono = Icons.Default.SearchOff,
@@ -416,12 +375,11 @@ fun ListadoMarcasTab(
                     .padding(vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(marcasFiltradas, key={it.id}){marc->
-                    MarcaItemContextual(
-                        marca = marc,
-                        onEditar={onEditar(marc)},
-                        onEliminar = {onSolicitarEliminar(marc)},
-                        onCambiarEstado = {onCambiarEstado(marc)}
+                items(categoriasFiltradas, key={it.id}){cat->
+                    CategoriaItemContextual(
+                        categoria = cat,
+                        onEditar={onEditar(cat)},
+                        onEliminar = {onSolicitarEliminar(cat)}
                     )
                 }
             }
@@ -433,19 +391,16 @@ fun ListadoMarcasTab(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MarcaItemContextual(
-    marca: Marca,
+fun CategoriaItemContextual(
+    categoria: Categoria,
     onEditar: () -> Unit,
-    onEliminar: () -> Unit,
-    onCambiarEstado: () -> Unit
+    onEliminar: () -> Unit
 ){
     var menuContextualExpandido by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
     Box(modifier = Modifier.fillMaxWidth()) {
         Card(modifier = Modifier
             .fillMaxWidth()
-            //las marcas inactivas se muestran atenuadas
-            .alpha(if (marca.activo) 1f else 0.55f)
             .combinedClickable(
                 onClick = {/*Clic normal*/},
                 onLongClick = {
@@ -455,34 +410,21 @@ fun MarcaItemContextual(
                 }
             ),
             colors = CardDefaults.cardColors(
-                containerColor = if (marca.activo) MaterialTheme.colorScheme.surfaceVariant
-                                 else MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //avatar circular con las iniciales del nombre de la marca
-                AvatarCircular(iniciales = obtenerIniciales(marca.nombre))
+                //avatar circular con las iniciales del nombre de la categoria
+                AvatarCircular(iniciales = obtenerIniciales(categoria.nombre))
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Text(
-                            text="${marca.id}. ${marca.nombre}",
-                            style= MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Badge(
-                            containerColor = if(marca.activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        ){
-                            Text(if (marca.activo)"Activo" else "Inactivo")
-                        }
-                    }
+                    Text(
+                        text="${categoria.id}. ${categoria.nombre}",
+                        style= MaterialTheme.typography.titleMedium
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -493,7 +435,7 @@ fun MarcaItemContextual(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text= marca.descripcion.ifBlank { "Sin descripcion" },
+                            text= categoria.descripcion.ifBlank { "Sin descripcion" },
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -505,9 +447,9 @@ fun MarcaItemContextual(
             expanded = menuContextualExpandido,
             onDismissRequest = {menuContextualExpandido=false}
         ) {
-            //cabecera no clickeable con el nombre de la marca
+            //cabecera no clickeable con el nombre de la categoria
             Text(
-                text = marca.nombre,
+                text = categoria.nombre,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -519,19 +461,6 @@ fun MarcaItemContextual(
                 onClick = {
                     menuContextualExpandido=false
                     onEditar()
-                }
-            )
-            DropdownMenuItem(
-                text={Text(if (marca.activo) "Deshabilitar" else "Habilitar")},
-                leadingIcon = {
-                    Icon(
-                        imageVector = if (marca.activo) Icons.Default.Block else Icons.Default.CheckCircle,
-                        contentDescription = if (marca.activo) "Deshabilitar" else "Habilitar"
-                    )
-                },
-                onClick = {
-                    menuContextualExpandido=false
-                    onCambiarEstado()
                 }
             )
             HorizontalDivider()
@@ -551,29 +480,28 @@ fun MarcaItemContextual(
 
 
 
-//Pestana 2: Formulario de alta de marcas
+//Pestana 2: Formulario de alta de categorias
 @Composable
-fun FormularioMarcaTab(
-    onGuardarMarca: (Marca) -> Unit,
-    marcaInicial: Marca? =null,
+fun FormularioCategoriaTab(
+    onGuardarCategoria: (Categoria) -> Unit,
+    categoriaInicial: Categoria? =null,
     onCancelarEdicion:()-> Unit
 
 ){
-    //Si se esta editando, los campos inician con los datos de la marca seleccionada
-    var nombre by remember(marcaInicial) { mutableStateOf(marcaInicial?.nombre ?: "") }
-    var descripcion by remember(marcaInicial) { mutableStateOf(marcaInicial?.descripcion ?: "") }
-    var estaActivo by remember(marcaInicial) { mutableStateOf(marcaInicial?.activo ?: true) }
+    //Si se esta editando, los campos inician con los datos de la categoria seleccionada
+    var nombre by remember(categoriaInicial) { mutableStateOf(categoriaInicial?.nombre ?: "") }
+    var descripcion by remember(categoriaInicial) { mutableStateOf(categoriaInicial?.descripcion ?: "") }
 
     //los errores solo se muestran despues de que el usuario modifico el campo
     //(en modo edicion se muestran desde el inicio, para avisar si el dato guardado no es valido)
-    var nombreTocado by remember(marcaInicial) { mutableStateOf(marcaInicial != null) }
+    var nombreTocado by remember(categoriaInicial) { mutableStateOf(categoriaInicial != null) }
 
-    val esEdicion =marcaInicial!=null
+    val esEdicion =categoriaInicial!=null
 
     //reglas de validacion
     val errorNombre: String? = when {
         nombre.isBlank() -> "El nombre es obligatorio"
-        nombre.trim().length > LARGO_MAXIMO_NOMBRE_MARCA -> "Maximo $LARGO_MAXIMO_NOMBRE_MARCA caracteres"
+        nombre.trim().length > LARGO_MAXIMO_NOMBRE_CATEGORIA -> "Maximo $LARGO_MAXIMO_NOMBRE_CATEGORIA caracteres"
         else -> null
     }
     val formularioValido = errorNombre == null
@@ -586,7 +514,7 @@ fun FormularioMarcaTab(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text= if(esEdicion)"Modificar Marca (Codigo: ${marcaInicial?.id})" else "Registro en SQLite",
+            text= if(esEdicion)"Modificar Categoria (Codigo: ${categoriaInicial?.id})" else "Registro en SQLite",
             style= MaterialTheme.typography.titleMedium,
             color= if(esEdicion) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
         )
@@ -598,7 +526,7 @@ fun FormularioMarcaTab(
                 nombreTocado=true
             },
             label="Nombre",
-            leadingIcon = Icons.Default.Sell,
+            leadingIcon = Icons.Default.Category,
             isError = nombreTocado && errorNombre != null,
             supportingText = if (nombreTocado) errorNombre else null
         )
@@ -609,36 +537,18 @@ fun FormularioMarcaTab(
             label="Descripcion (opcional)",
             leadingIcon = Icons.Default.Description
         )
-
-        //control de seleccion: Switch para estado activo e inactivo
-        //solo en edicion: al crear, la marca nueva siempre queda activa
-        if (esEdicion){
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("La marca esta activa?")
-                Switch(
-                    checked = estaActivo,
-                    onCheckedChange = {estaActivo=it}
-                )
-            }
-        }
         Spacer(modifier = Modifier.height(8.dp))
 
         //Boton de confirmacion (deshabilitado mientras el formulario no sea valido)
         Button(
             onClick = {
-                val marcaResultante= Marca(
-                    id= marcaInicial?.id?:0,
+                val categoriaResultante= Categoria(
+                    id= categoriaInicial?.id?:0,
                     nombre=nombre.trim(),
                     //si no se carga descripcion se guarda "" (la columna es NOT NULL)
-                    descripcion = descripcion.trim(),
-                    //alta: siempre activa; edicion: lo que indique el Switch
-                    activo = if (esEdicion) estaActivo else true
+                    descripcion = descripcion.trim()
                 )
-                onGuardarMarca(marcaResultante)
+                onGuardarCategoria(categoriaResultante)
             },
             enabled = formularioValido,
             modifier = Modifier.fillMaxWidth()

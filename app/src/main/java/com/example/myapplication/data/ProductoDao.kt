@@ -13,7 +13,7 @@ class ProductoDao (context: Context) {
         val valores = ContentValues().apply {
             put(DatabaseHelper.COL_DESCRIPCION,producto.descripcion)
             put(DatabaseHelper.COL_PROVEEDOR_ID,producto.proveedorId)
-            put(DatabaseHelper.COL_MARCA_ID,producto.marcaId)
+            put(DatabaseHelper.COL_CATEGORIA_ID,producto.categoriaId)
             put(DatabaseHelper.COL_PRECIO,producto.precio)
             put(DatabaseHelper.COL_ACTIVO,if (producto.activo) 1 else 0)
         }
@@ -27,15 +27,15 @@ class ProductoDao (context: Context) {
     fun listarTodos():List<Producto>{
         val lista =mutableListOf<Producto>()
         val db =dbHelper.readableDatabase
-        //JOIN con proveedores y marcas para traer la razon social del proveedor y el nombre de la marca
-        //se usan alias (p, pr y m) porque las tres tablas tienen las columnas id y activo
-        //(productos y marcas tambien comparten "descripcion", por eso se califica con p.)
+        //JOIN con proveedores y categorias para traer la razon social del proveedor y el nombre de la categoria
+        //se usan alias (p, pr y c) porque las tres tablas tienen las columnas id y activo
+        //(productos y categorias tambien comparten "descripcion", por eso se califica con p.)
         val cursor = db.rawQuery(
             "SELECT p.${DatabaseHelper.COL_ID}, p.${DatabaseHelper.COL_DESCRIPCION}, p.${DatabaseHelper.COL_PROVEEDOR_ID}, " +
-                    "pr.${DatabaseHelper.COL_PROV_RAZON_SOCIAL}, p.${DatabaseHelper.COL_MARCA_ID}, m.${DatabaseHelper.COL_MARC_NOMBRE}, p.${DatabaseHelper.COL_PRECIO}, p.${DatabaseHelper.COL_ACTIVO} " +
+                    "pr.${DatabaseHelper.COL_PROV_RAZON_SOCIAL}, p.${DatabaseHelper.COL_CATEGORIA_ID}, c.${DatabaseHelper.COL_CAT_NOMBRE}, p.${DatabaseHelper.COL_PRECIO}, p.${DatabaseHelper.COL_ACTIVO} " +
                     "FROM ${DatabaseHelper.TABLA_PRODUCTOS} p " +
                     "INNER JOIN ${DatabaseHelper.TABLA_PROVEEDORES} pr ON p.${DatabaseHelper.COL_PROVEEDOR_ID} = pr.${DatabaseHelper.COL_PROV_ID} " +
-                    "INNER JOIN ${DatabaseHelper.TABLA_MARCAS} m ON p.${DatabaseHelper.COL_MARCA_ID} = m.${DatabaseHelper.COL_MARC_ID} " +
+                    "INNER JOIN ${DatabaseHelper.TABLA_CATEGORIAS} c ON p.${DatabaseHelper.COL_CATEGORIA_ID} = c.${DatabaseHelper.COL_CAT_ID} " +
                     "ORDER BY p.${DatabaseHelper.COL_ID} DESC", null
         )
         if (cursor.moveToFirst()){
@@ -44,11 +44,11 @@ class ProductoDao (context: Context) {
                 val descripcion = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_DESCRIPCION))
                 val proveedorId = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PROVEEDOR_ID))
                 val proveedor = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PROV_RAZON_SOCIAL))
-                val marcaId = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_MARCA_ID))
-                val marca = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_MARC_NOMBRE))
+                val categoriaId = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CATEGORIA_ID))
+                val categoria = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CAT_NOMBRE))
                 val precio = cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_PRECIO))
                 val activo= cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ACTIVO)) == 1
-                lista.add(Producto(id, descripcion, proveedorId, proveedor, marcaId, marca, precio, activo))
+                lista.add(Producto(id, descripcion, proveedorId, proveedor, categoriaId, categoria, precio, activo))
 
             } while (cursor.moveToNext())
         }
@@ -64,7 +64,7 @@ class ProductoDao (context: Context) {
         val valores = ContentValues().apply {
             put(DatabaseHelper.COL_DESCRIPCION,producto.descripcion)
             put(DatabaseHelper.COL_PROVEEDOR_ID,producto.proveedorId)
-            put(DatabaseHelper.COL_MARCA_ID,producto.marcaId)
+            put(DatabaseHelper.COL_CATEGORIA_ID,producto.categoriaId)
             put(DatabaseHelper.COL_PRECIO,producto.precio)
             put(DatabaseHelper.COL_ACTIVO,if (producto.activo) 1 else 0)
         }
@@ -97,7 +97,7 @@ class ProductoDao (context: Context) {
             put(DatabaseHelper.COL_ID,producto.id)
             put(DatabaseHelper.COL_DESCRIPCION,producto.descripcion)
             put(DatabaseHelper.COL_PROVEEDOR_ID,producto.proveedorId)
-            put(DatabaseHelper.COL_MARCA_ID,producto.marcaId)
+            put(DatabaseHelper.COL_CATEGORIA_ID,producto.categoriaId)
             put(DatabaseHelper.COL_PRECIO,producto.precio)
             put(DatabaseHelper.COL_ACTIVO,if (producto.activo) 1 else 0)
         }

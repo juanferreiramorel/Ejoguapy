@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,7 +37,7 @@ import com.example.myapplication.components.AvatarCircular
 import com.example.myapplication.components.CampoBusqueda
 import com.example.myapplication.components.CustomTextField
 import com.example.myapplication.components.EstadoVacio
-import com.example.myapplication.data.MarcaDao
+import com.example.myapplication.data.CategoriaDao
 import com.example.myapplication.data.ProductoDao
 import com.example.myapplication.data.ProveedorDao
 import com.example.myapplication.util.formatearGuaranies
@@ -48,8 +48,8 @@ data class Producto(
     val descripcion: String,
     val proveedorId: Int, //clave foranea: id del proveedor en la base de datos
     val proveedor: String, //razon social del proveedor (se obtiene con el JOIN, solo para mostrar)
-    val marcaId: Int, //clave foranea: id de la marca en la base de datos
-    val marca: String, //nombre de la marca (se obtiene con el JOIN, solo para mostrar)
+    val categoriaId: Int, //clave foranea: id de la categoria en la base de datos
+    val categoria: String, //nombre de la categoria (se obtiene con el JOIN, solo para mostrar)
     val precio: Double,
     val activo: Boolean
 )
@@ -270,7 +270,7 @@ fun ListadoProductosTab(
     onRegistrarPrimero: () -> Unit
 ){
     var menuOpcionesGeneralExpandido by remember { mutableStateOf(false) }
-    //texto de busqueda: filtra por descripcion, proveedor o marca (sin distinguir mayusculas)
+    //texto de busqueda: filtra por descripcion, proveedor o categoria (sin distinguir mayusculas)
     var textoBusqueda by remember { mutableStateOf("") }
     val filtrando = textoBusqueda.isNotBlank()
     val productosFiltrados = if (filtrando) {
@@ -278,7 +278,7 @@ fun ListadoProductosTab(
         productos.filter {
             it.descripcion.contains(buscado, ignoreCase = true) ||
                     it.proveedor.contains(buscado, ignoreCase = true) ||
-                    it.marca.contains(buscado, ignoreCase = true)
+                    it.categoria.contains(buscado, ignoreCase = true)
         }
     } else productos
 
@@ -337,7 +337,7 @@ fun ListadoProductosTab(
             CampoBusqueda(
                 texto = textoBusqueda,
                 onTextoChange = {textoBusqueda=it},
-                placeholder = "Buscar por descripcion, proveedor o marca"
+                placeholder = "Buscar por descripcion, proveedor o categoria"
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -431,14 +431,14 @@ fun ProductoItemContextual(
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Sell,
-                            contentDescription = "Marca",
+                            imageVector = Icons.Default.Category,
+                            contentDescription = "Categoria",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text= producto.marca,
+                            text= producto.categoria,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -545,15 +545,15 @@ fun FormularioProductoTab(
     val proveedorSeleccionado = proveedoresDisponibles.find { it.id == proveedorSeleccionadoId }
     var menuExpandido by remember { mutableStateOf(false) }
 
-    //Opciones para el menu de seleccion de marcas (mismo criterio que proveedores)
-    //Solo las activas; si se edita un producto cuya marca esta inactiva, igual se incluye
-    val marcasDisponibles = remember(productoInicial) {
-        MarcaDao(context).listarTodos().filter { it.activo || it.id == productoInicial?.marcaId }
+    //Opciones para el menu de seleccion de categorias
+    //Las categorias no tienen estado, por eso se listan todas (ordenadas por nombre)
+    val categoriasDisponibles = remember(productoInicial) {
+        CategoriaDao(context).listarTodos().sortedBy { it.nombre.lowercase() }
     }
-    //se guarda el id de la marca seleccionada (se muestra su nombre)
-    var marcaSeleccionadaId by remember(productoInicial) {mutableStateOf(productoInicial?.marcaId ?: marcasDisponibles.firstOrNull()?.id)}
-    val marcaSeleccionada = marcasDisponibles.find { it.id == marcaSeleccionadaId }
-    var menuMarcasExpandido by remember { mutableStateOf(false) }
+    //se guarda el id de la categoria seleccionada (se muestra su nombre)
+    var categoriaSeleccionadaId by remember(productoInicial) {mutableStateOf(productoInicial?.categoriaId ?: categoriasDisponibles.firstOrNull()?.id)}
+    val categoriaSeleccionada = categoriasDisponibles.find { it.id == categoriaSeleccionadaId }
+    var menuCategoriasExpandido by remember { mutableStateOf(false) }
     val esEdicion =productoInicial!=null
 
     //reglas de validacion
@@ -565,7 +565,7 @@ fun FormularioProductoTab(
         precioNumero <= 0 -> "El precio debe ser mayor a 0"
         else -> null
     }
-    val formularioValido = errorDescripcion == null && errorPrecio == null && marcaSeleccionada != null && proveedorSeleccionado != null
+    val formularioValido = errorDescripcion == null && errorPrecio == null && categoriaSeleccionada != null && proveedorSeleccionado != null
 
     Column(
         modifier = Modifier
@@ -604,41 +604,41 @@ fun FormularioProductoTab(
             supportingText = if (precioTocado) errorPrecio else null
         )
 
-        //Control de Seleccion 1: menu desplegable para marcas
+        //Control de Seleccion 1: menu desplegable para categorias
         ExposedDropdownMenuBox(
-            expanded=menuMarcasExpandido,
-            onExpandedChange = {menuMarcasExpandido = !menuMarcasExpandido}
+            expanded=menuCategoriasExpandido,
+            onExpandedChange = {menuCategoriasExpandido = !menuCategoriasExpandido}
         ) {
             OutlinedTextField(
-                value=marcaSeleccionada?.nombre ?: "",
+                value=categoriaSeleccionada?.nombre ?: "",
                 onValueChange = {},
                 readOnly = true,
-                label= {Text("Marca")},
-                leadingIcon = {Icon(Icons.Default.Sell, contentDescription = "Marca")},
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuMarcasExpandido)},
+                label= {Text("Categoria")},
+                leadingIcon = {Icon(Icons.Default.Category, contentDescription = "Categoria")},
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuCategoriasExpandido)},
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
-                expanded = menuMarcasExpandido,
-                onDismissRequest = {menuMarcasExpandido=false}
+                expanded = menuCategoriasExpandido,
+                onDismissRequest = {menuCategoriasExpandido=false}
             ) {
-                marcasDisponibles.forEach { marca->
+                categoriasDisponibles.forEach { categoria->
                     DropdownMenuItem(
-                        text= {Text(marca.nombre)},
+                        text= {Text(categoria.nombre)},
                         onClick = {
-                            marcaSeleccionadaId= marca.id
-                            menuMarcasExpandido=false
+                            categoriaSeleccionadaId= categoria.id
+                            menuCategoriasExpandido=false
                         }
                     )
                 }
             }
         }
-        //aviso cuando no hay marcas cargadas
-        if (marcasDisponibles.isEmpty()){
+        //aviso cuando no hay categorias cargadas
+        if (categoriasDisponibles.isEmpty()){
             Text(
-                text= "Registre una marca activa primero",
+                text= "Registre una categoria primero",
                 style = MaterialTheme.typography.bodySmall,
                 color= MaterialTheme.colorScheme.error
             )
@@ -706,8 +706,8 @@ fun FormularioProductoTab(
                     descripcion=descripcion.trim(),
                     proveedorId = proveedorSeleccionado?.id ?: 0,
                     proveedor = proveedorSeleccionado?.razonSocial ?: "",
-                    marcaId = marcaSeleccionada?.id ?: 0,
-                    marca = marcaSeleccionada?.nombre ?: "",
+                    categoriaId = categoriaSeleccionada?.id ?: 0,
+                    categoria = categoriaSeleccionada?.nombre ?: "",
                     precio = precioNumero ?: 0.0,
                     activo = estaActivo
                 )
